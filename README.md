@@ -8,6 +8,10 @@ dados do site: você entra com a mesma conta e o que muda num lado aparece no ou
 |---|---|---|---|---|
 | ![estoque](test_visual/render/estoque.png) | ![scanner](test_visual/render/scanner_resultado.png) | ![assistente](test_visual/render/assistente_conversa.png) | ![contagem](test_visual/render/contagem.png) | ![solicitados](test_visual/render/solicitados.png) |
 
+> **Está começando em Flutter?** Leia o [GUIA_FLUTTER.md](GUIA_FLUTTER.md): explica em português simples os
+> conceitos usados aqui (widget, `setState`, `async/await`, estado global...). Todo arquivo `.dart` também
+> começa com um bloco "O QUE É ESTE ARQUIVO", e cada classe, função e passo importante tem comentário.
+
 > Estas imagens são renders de teste (`test_visual/`), gerados sem celular.
 > Design de origem: Figma "Untitled" (referências em `design/figma/`).
 
