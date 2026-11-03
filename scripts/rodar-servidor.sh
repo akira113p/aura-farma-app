@@ -168,7 +168,7 @@ PORT=$PORTA
 NODE_ENV=development
 MONGODB_URI=$MONGODB_URI
 SESSION_SECRET=$SESSION_SECRET
-FRONTEND_ORIGIN=http://localhost:5173
+FRONTEND_ORIGIN=http://localhost:5173,http://localhost:5174
 OPENROUTER_API_KEY=$OPENROUTER_API_KEY
 OPENROUTER_MODEL=nvidia/nemotron-3-ultra-550b-a55b:free
 OPENROUTER_FALLBACK_MODELS=poolside/laguna-s-2.1:free,nvidia/nemotron-3.5-lightning:free,google/gemma-4-31b-it:free
@@ -176,6 +176,13 @@ OPENROUTER_PLANNER_MODEL=poolside/laguna-s-2.1:free
 EOF
   )
   echo "Criado $ENV_FILE (fora do git; para mudar algo, edite esse arquivo)."
+fi
+
+# .env antigo: garante que o app Flutter web (porta 5174) também é aceito pelo CORS do backend.
+# grep -q = só testa se o texto existe; o sed acrescenta ",http://localhost:5174" no fim da linha FRONTEND_ORIGIN.
+if [ -f "$ENV_FILE" ] && grep -q '^FRONTEND_ORIGIN=' "$ENV_FILE" && ! grep -q 'localhost:5174' "$ENV_FILE"; then
+  sed -i 's|^FRONTEND_ORIGIN=.*|&,http://localhost:5174|' "$ENV_FILE"
+  echo "Adicionei http://localhost:5174 ao FRONTEND_ORIGIN (app Flutter web)."
 fi
 
 # ---------------------------------------------------------------- sobe tudo

@@ -123,6 +123,60 @@ Quando o túnel mudar (você reiniciou o script), repita só este passo. Não pr
 
 ---
 
+## Alternativa: tudo no PC, internet pelo 4G, app no navegador (sem túnel e sem porta aberta)
+
+Use este modo se o seu PC está ligado à internet por **4G** (modem ou celular como hotspot) e você quer rodar o
+**app Flutter no próprio PC, no navegador (Flutter web)**, sem celular e sem instalar APK.
+
+```
+ PC (internet via 4G)
+ ┌──────────────────────────────────────────────────────────────┐
+ │  Navegador ──► app Flutter web  (localhost:5174)             │
+ │                    │                                         │
+ │                    ▼  localhost, não sai do PC               │
+ │               Backend (localhost:4000) ─────┬──► MongoDB Atlas│ ◄─ só estes dois
+ │                                             └──► OpenRouter   │    usam a internet
+ └──────────────────────────────────────────────────────────────┘
+```
+
+Como app e backend estão **no mesmo PC**, falam por `localhost`: **não precisa de túnel, não precisa liberar porta
+no roteador nem no firewall** (aliás, atrás do 4G isso nem seria possível: a operadora compartilha um IP entre
+vários clientes). A internet do 4G só é usada pelo backend para falar com o MongoDB Atlas e com o OpenRouter (IA).
+Por isso use um **MongoDB Atlas** (na nuvem) ou um Mongo local; ambos funcionam.
+
+**Terminal 1: backend (sem túnel):**
+
+```bash
+git clone https://github.com/akira113p/aura-farma-app.git
+cd aura-farma-app
+./scripts/rodar-servidor.sh --sem-tunel
+```
+
+**Terminal 2: app Flutter no navegador** (precisa do Flutter instalado, veja "Instalar Flutter no Linux"; não
+precisa do Android SDK):
+
+```bash
+flutter pub get
+flutter run -d web-server --web-port 5174     # depois abra http://localhost:5174 no navegador
+# ou, se tiver o Chrome instalado:  flutter run -d chrome --web-port 5174
+```
+
+Entre com a sua conta (o cadastro é no site, veja o passo 3 do início rápido). O endereço do servidor já é
+`http://localhost:4000/api`, sem precisar configurar nada.
+
+Detalhes que importam:
+- **Use sempre a porta 5174** (`--web-port 5174`). O backend só aceita pedidos vindos dos endereços listados em
+  `FRONTEND_ORIGIN` (CORS). O script já cria o `.env` com `http://localhost:5173,http://localhost:5174`. Se o seu
+  `.env` já existia, o script acrescenta a porta 5174 sozinho na próxima vez que rodar.
+- No navegador **o próprio navegador guarda o cookie de sessão** (o app não consegue ler nem escrever o cookie). Por isso
+  o app web usa `localhost:4000` direto; **não aponte o app web para o endereço do túnel**, porque o cookie de outro
+  domínio é bloqueado pelo navegador.
+- O **scanner por câmera** não foi testado no navegador; use o campo de digitação manual do scanner.
+- O túnel (`./scripts/rodar-servidor.sh` sem `--sem-tunel`) continua sendo necessário só para o **app no celular**
+  fora da sua rede.
+
+---
+
 ## Cada parte separada
 
 ### Backend (repo `aura-farma`, pasta `backend/`)
@@ -158,6 +212,7 @@ npm --prefix frontend run dev             # http://localhost:5173
 ```bash
 flutter pub get
 flutter run -d linux                      # janela no PC (o scanner usa digitação manual: sem câmera)
+flutter run -d web-server --web-port 5174 # no navegador do PC (veja "Alternativa: tudo no PC")
 flutter run                               # celular no USB / emulador Android
 flutter run --dart-define=API_BASE_URL=http://192.168.0.10:4000/api   # fixa o servidor (opcional)
 ```

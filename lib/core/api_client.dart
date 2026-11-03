@@ -7,9 +7,11 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:http/http.dart' as http;
 
 import '../config.dart';
+import 'cliente_http.dart';
 import 'sessao_storage.dart';
 
 /// Erro devolvido pela API (ou falha de rede, com [status] 0).
@@ -41,7 +43,7 @@ class ApiClient {
   /// Todos os parâmetros são opcionais: nos testes dá para injetar um cliente HTTP falso,
   /// um armazenamento em memória e uma URL fixa. No app real usa os padrões (`??` = "se for nulo, use isto").
   ApiClient({http.Client? client, SessaoStorage? storage, String? baseUrl})
-      : _client = client ?? http.Client(),
+      : _client = client ?? criarClienteHttp(),
         _storage = storage ?? SessaoStorageSegura(),
         _baseUrl = baseUrl;
 
@@ -62,8 +64,10 @@ class ApiClient {
   /// URL base da API. Lida a cada chamada, então vale a troca de servidor feita no login.
   String get baseUrl => _baseUrl ?? AppConfig.baseUrl;
 
-  /// true se há um cookie de sessão carregado/guardado.
-  bool get temSessao => _cookie != null;
+  /// true se há (ou pode haver) uma sessão.
+  /// No navegador (web) o cookie fica com o próprio navegador e o app não consegue vê-lo;
+  /// então sempre vale perguntar ao servidor (`/auth/me`) se a sessão ainda existe.
+  bool get temSessao => kIsWeb || _cookie != null;
 
   /// Lê o cookie salvo para a memória.
   /// Lê o cookie salvo no aparelho para a memória. Chamada ao abrir o app (AppStore.iniciar).
@@ -102,7 +106,8 @@ class ApiClient {
     final req = http.Request(metodo, Uri.parse('$baseUrl$path'));
     req.headers['Accept'] = 'application/json';
     // Anexa o crachá de sessão, se houver (`_cookie!` é seguro: checado na mesma linha).
-    if (_cookie != null) req.headers['Cookie'] = _cookie!;
+    // No navegador esse cabeçalho é proibido (o navegador cuida do cookie sozinho), por isso `!kIsWeb`.
+    if (!kIsWeb && _cookie != null) req.headers['Cookie'] = _cookie!;
     // POST sempre manda corpo JSON (mesmo vazio `{}`); outros só se houver `body`.
     if (body != null || metodo == 'POST') {
       req.headers['Content-Type'] = 'application/json';
